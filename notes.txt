@@ -1,0 +1,34 @@
+Fighting Fantasy combat analysis
+
+C [.c] for simulation and stochastic optimal control
+Mathematica [.nb] for algebra and visualisation
+Bash [.sh] and Gnuplot [.sh] for basic analysis and visualisation
+
+All code should run in under ten minutes except heuristic.c which will take longer O(days)
+
+run.sh : compiles and runs all simulation code (analysis then follows with Mathematica notebooks as below)
+
+previous-results.tar.gz -- previously-run results of simulation code 
+
+Fig 1 -- victory probability theory vs simulation for no luck
+  battlesim.c simulates combat dynamics with no Luck strategy -> simscan.txt
+  simscan-analyse.nb compares these simulation results with theoretical expression and visualises
+
+Fig 2 -- victory probability theory vs simulation for simple luck
+  simpleluck.c simulates combat dynamics with simple Luck strategy -> simpleluck.txt
+  simpleluck-analyse.nb compares these simulation results with theoretical expression and visualises
+
+Fig 4 and Fig S1 -- optimal strategies
+  optimal-strategies.c runs stochastic optimal control approach to derive optimal strategies for each state -> optimal-strategies.txt
+  optimal-strategies-analyse.nb visualises these results 
+
+Fig 5 -- simulated good heuristic strategies
+  heuristic.c simulates various heuristic Luck strategies -> heuristic.txt
+  heuristic-analyse.nb visualises these results
+
+Fig 6 -- luck threshold in simulated approaches
+  thresh-stats.sh [Bash] extracts Luck threshold statistics from heuristic.txt
+  plotthresh.sh [Gnuplot] plots these results
+
+Fig S1 -- full optimal strategies
+  [as Fig 4]
