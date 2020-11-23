@@ -1,5 +1,6 @@
 // Fighting Fantasy combat analysis
 // stochastic optimal control simulation for optimal Luck strategy at each state
+// takes an optional command line parameter: if this is nonzero, work with the alternative case where a successful outcome after a victorious round reduces opponent stamina by 3 (rather than the usual 4)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +39,7 @@ int sref(int c1, int c2, int c3, int c4)
   return (c1+3)*MAXS*MAXL*2 + (c2+3)*MAXL*2 + (c3+100)*2 + c4;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
   int shero, sopp, luck;
   int outcome;
@@ -55,13 +56,26 @@ int main(void)
   int i;
   double py1, py2, py3, py4, pn1, pn2;
   int *strats;
-   
+  int amplify;
+  char str[100];
+  
+  // process command-line parameter to decide on normal vs alternative regime
+  if(argc > 1)
+    {
+      if(atoi(argv[1]) != 0)
+	amplify = 3;
+      else
+	amplify = 4;
+    }	  
+    
   // allocate memory for arrays of victory probability and optimal strategies through state space
   vprob = (double*)malloc(sizeof(double)*MAXL*MAXS*MAXS*2);
   strategy = (int*)malloc(sizeof(int)*MAXL*MAXS*MAXS*2);
   strats = (int*)malloc(sizeof(int)*MAXL*MAXS*MAXS*MAXK);
-  
-  fp = fopen("optimal-strategies.txt", "w");
+
+  // open corresponding file for output
+  sprintf(str, "optimal-strategies-%i.txt", amplify);
+  fp = fopen(str, "w");
 
   // loop through Skill differences -- perform optimal computation for each
   for(kdiff = -10; kdiff <= 10; kdiff++)
@@ -178,16 +192,16 @@ int main(void)
 
 		      // now consider the win outcome
 		      // to compute vprob (sopp, shero, luck, 1) we need vprob all possible subsequent states:
-		      // (sopp-4, shero, luck-1, [0 or 1]) : used luck and dealt more damage, then [lost or won] next round
+		      // (sopp-amplify, shero, luck-1, [0 or 1]) : used luck and dealt more damage, then [lost or won] next round
 		      // (sopp-2, shero, luck, [0 or 1]) : didn't use luck, then [lost or won] next round
 		      // (sopp-1, shero, luck-1, [0 or 1]) : used luck and dealt less damage, then [lost or won] next round
-		      if(vprob[sref(sopp, shero, luck, 1)] == -1 && vprob[sref(sopp-4, shero, luck-1, 0)] != -1 && vprob[sref(sopp-2, shero, luck, 0)] != -1 && vprob[sref(sopp-1, shero, luck-1, 0)] != -1 && vprob[sref(sopp-4, shero, luck-1, 1)] != -1 && vprob[sref(sopp-2, shero, luck, 1)] != -1 && vprob[sref(sopp-1, shero, luck-1, 1)] != -1)
+		      if(vprob[sref(sopp, shero, luck, 1)] == -1 && vprob[sref(sopp-amplify, shero, luck-1, 0)] != -1 && vprob[sref(sopp-2, shero, luck, 0)] != -1 && vprob[sref(sopp-1, shero, luck-1, 0)] != -1 && vprob[sref(sopp-amplify, shero, luck-1, 1)] != -1 && vprob[sref(sopp-2, shero, luck, 1)] != -1 && vprob[sref(sopp-1, shero, luck-1, 1)] != -1)
 			{
 			  change = 1;
 			  // compute probabilities associated with all outcomes where luck was used
-			  py1 = q(luck)*pl*vprob[sref(sopp-4, shero, luck-1, 0)];
+			  py1 = q(luck)*pl*vprob[sref(sopp-amplify, shero, luck-1, 0)];
 			  py2 = (1.-q(luck))*pl*vprob[sref(sopp-1, shero, luck-1, 0)];
-			  py3 = q(luck)*pw*vprob[sref(sopp-4, shero, luck-1, 1)];
+			  py3 = q(luck)*pw*vprob[sref(sopp-amplify, shero, luck-1, 1)];
 			  py4 = (1.-q(luck))*pw*vprob[sref(sopp-1, shero, luck-1, 1)];
 
 			  // compute probabilities associated with all outcomes where luck wasn't used
@@ -210,7 +224,7 @@ int main(void)
 
 			  // output this calculation
 			  if(luck > 0)
-			    printf("At (%i,%i,%i,1) . Y00 -> (%i,%i,%i,0) %.3e ; Y01 -> (%i,%i,%i,1) %.3e ; Y10 -> (%i,%i,%i,0) %.3e ; Y11 -> (%i,%i,%i,1) %.3e . N0 -> (%i,%i,%i,0) %.3e ; N1 -> (%i,%i,%i,1) %.3e . %.3e vs %.3e (%.3e) : %c wins\n", sopp, shero, luck, sopp-1, shero, luck-1, py2, sopp-1, shero, luck-1, py4, sopp-4, shero, luck-1, py1, sopp-4, shero, luck-1, py3, sopp-2, shero, luck, pn1, sopp-2, shero, luck, pn2, py, pn, (py-pn), (py > pn ? 'Y' : 'N'));
+			    printf("At (%i,%i,%i,1) . Y00 -> (%i,%i,%i,0) %.3e ; Y01 -> (%i,%i,%i,1) %.3e ; Y10 -> (%i,%i,%i,0) %.3e ; Y11 -> (%i,%i,%i,1) %.3e . N0 -> (%i,%i,%i,0) %.3e ; N1 -> (%i,%i,%i,1) %.3e . %.3e vs %.3e (%.3e) : %c wins\n", sopp, shero, luck, sopp-1, shero, luck-1, py2, sopp-1, shero, luck-1, py4, sopp-amplify, shero, luck-1, py1, sopp-amplify, shero, luck-1, py3, sopp-2, shero, luck, pn1, sopp-2, shero, luck, pn2, py, pn, (py-pn), (py > pn ? 'Y' : 'N'));
 			}
 		    }
 		}
