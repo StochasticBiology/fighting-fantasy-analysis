@@ -6,7 +6,7 @@ Fighting Fantasy combat analysis
 * Mathematica [.nb] for algebra and visualisation
 * Bash [.sh] for wrapping the analysis
 
-_Requirements_: _rpart_ library for R
+Requirements: _rpart_ library for R
 
 All code should run in under ten minutes 
 
